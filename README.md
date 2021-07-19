@@ -18,13 +18,13 @@ mvnw spring-boot:run
 localhost:8080/api/v1/cerveja
 
 ## Endpoints da API:
-|Objetivo                           | Método HTTP | Endpoint               |
-|:---------------------------------:|:-----------:|:----------------------:|
-|Consultar todas as cervejas        | GET         | /api/v1/cerveja        |
-|Consultar uma cerveja              | GET         | /api/v1/cerveja/{nome} |
-|Salvar uma cerveja                 | POST        | /api/v1/cerveja        |
-|Atualizar a quantidade de cervejas | PATCH       | /api/v1/cerveja/{id}   |
-|Deletar uma cerveja                | DELETE      | /api/v1/cerveja/{id}   |
+|Objetivo                           | Método HTTP | Endpoint                         |
+|:---------------------------------:|:-----------:|:--------------------------------:|
+|Consultar todas as cervejas        | GET         | /api/v1/cerveja                  |
+|Consultar uma cerveja              | GET         | /api/v1/cerveja/{nome}           |
+|Salvar uma cerveja                 | POST        | /api/v1/cerveja                  |
+|Aumentar a quantidade de cervejas | PATCH        | /api/v1/cerveja/{id}/increment   |
+|Deletar uma cerveja                | DELETE      | /api/v1/cerveja/{id}             |
 
 Observações: 
  - Para o método POST deve-se passar no corpo da requisição os valores dos campos da cerveja
