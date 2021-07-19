@@ -27,8 +27,8 @@ localhost:8080/api/v1/cerveja
 |Deletar uma cerveja                | DELETE      | /api/v1/cerveja/{id}   |
 
 Observações: 
-	- Para o método POST deve-se passar no corpo da requisição os valores dos campos da cerveja
-	- Para o método PATCH deve-se passar no copor da requisição a quantidade
+ - Para o método POST deve-se passar no corpo da requisição os valores dos campos da cerveja
+ - Para o método PATCH deve-se passar no copor da requisição a quantidade
 
 ## Requisitos para o projeto:
 Java 11 ou versões superiores
