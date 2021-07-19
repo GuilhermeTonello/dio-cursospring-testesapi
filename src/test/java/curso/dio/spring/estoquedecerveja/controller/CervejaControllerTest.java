@@ -1,7 +1,11 @@
 package curso.dio.spring.estoquedecerveja.controller;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+
+import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -96,6 +100,59 @@ class CervejaControllerTest {
 		
 		mockMvc
 			.perform(MockMvcRequestBuilders.get("/api/v1/cerveja/" + cervejaDTO.getNome())
+				.contentType(MediaType.APPLICATION_JSON))
+					.andExpect(MockMvcResultMatchers.status().isNotFound());
+	}
+	
+	@Test
+	void quandoGetForInvocadoParaRetornarUmaListaDeCervejasRetornarStatusOk() throws Exception {
+		CervejaDTO cervejaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		
+		when(cervejaService.findAll())
+			.thenReturn(Collections.singletonList(cervejaDTO));
+		
+		mockMvc
+			.perform(MockMvcRequestBuilders.get("/api/v1/cerveja/")
+				.contentType(MediaType.APPLICATION_JSON))
+					.andExpect(MockMvcResultMatchers.status().isOk())
+					.andExpect(MockMvcResultMatchers.jsonPath("$[0].nome", is(cervejaDTO.getNome())));
+	}
+	
+	@Test
+	void quandoGetForInvocadoParaRetornarUmaListaDeCervejasVaziaRetornarStatusOk() throws Exception {
+		when(cervejaService.findAll())
+			.thenReturn(Collections.emptyList());
+		
+		mockMvc
+			.perform(MockMvcRequestBuilders.get("/api/v1/cerveja/")
+				.contentType(MediaType.APPLICATION_JSON))
+					.andExpect(MockMvcResultMatchers.status().isOk());
+	}
+	
+	@Test
+	void quandoDeleteForInvocadoComIdValidoRetornarStatusNoContent() throws Exception {
+		CervejaDTO cervejaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		
+		doNothing()
+			.when(cervejaService)
+			.deleteById(cervejaDTO.getId());
+		
+		mockMvc
+			.perform(MockMvcRequestBuilders.delete("/api/v1/cerveja/" + cervejaDTO.getId())
+				.contentType(MediaType.APPLICATION_JSON))
+					.andExpect(MockMvcResultMatchers.status().isNoContent());
+	}
+	
+	@Test
+	void quandoDeleteForInvocadoComIdNaoValidoRetornarStatusNotFound() throws Exception {
+		CervejaDTO cervejaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		
+		doThrow(CervejaNaoEncontradaException.class)
+			.when(cervejaService)
+			.deleteById(cervejaDTO.getId());
+		
+		mockMvc
+			.perform(MockMvcRequestBuilders.delete("/api/v1/cerveja/" + cervejaDTO.getId())
 				.contentType(MediaType.APPLICATION_JSON))
 					.andExpect(MockMvcResultMatchers.status().isNotFound());
 	}

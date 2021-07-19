@@ -1,10 +1,12 @@
 package curso.dio.spring.estoquedecerveja.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -93,6 +95,53 @@ class CervejaServiceTest {
 		
 		// then
 		assertThrows(CervejaNaoEncontradaException.class, () -> cervejaService.findByNome(cervejaEsperadaDTO.getNome()));
+	}
+	
+	@Test
+	void quandoListaDeCervejasForChamadaRetornarUmaListaComTodasAsCervejas() {
+		CervejaDTO cervejaEsperadaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		Cerveja cervejaEsperada = CervejaMapper.getInstance().toModel(cervejaEsperadaDTO);
+		
+		when(cervejaRepository.findAll())
+			.thenReturn(Collections.singletonList(cervejaEsperada));
+		
+		List<CervejaDTO> listaCervejasDTO = cervejaService.findAll();
+		
+		assertThat(listaCervejasDTO, is(not(empty())));
+		assertThat(listaCervejasDTO.get(0), is(equalTo(cervejaEsperadaDTO)));
+	}
+	
+	@Test
+	void quandoListaDeCervejasForChamadaRetornarUmaListaVazia() {
+		when(cervejaRepository.findAll())
+			.thenReturn(Collections.emptyList());
+		
+		List<CervejaDTO> listaCervejasDTO = cervejaService.findAll();
+		
+		assertThat(listaCervejasDTO, is(empty()));
+	}
+	
+	@Test
+	void quandoUmIdValidoForInformadoUmaCervejaDeveSerDeletada() throws CervejaNaoEncontradaException {
+		// given
+		CervejaDTO cervejaEsperadaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		Cerveja cervejaEsperada = CervejaMapper.getInstance().toModel(cervejaEsperadaDTO);
+		
+		// when
+		when(cervejaRepository.findById(cervejaEsperada.getId()))
+			.thenReturn(Optional.of(cervejaEsperada));
+		
+		doNothing()
+			.when(cervejaRepository).deleteById(cervejaEsperada.getId());
+		
+		// then
+		cervejaService.deleteById(cervejaEsperadaDTO.getId());
+		
+		verify(cervejaRepository, times(1))
+			.findById(cervejaEsperada.getId());
+		
+		verify(cervejaRepository, times(1))
+			.deleteById(cervejaEsperada.getId());
 	}
 
 }
