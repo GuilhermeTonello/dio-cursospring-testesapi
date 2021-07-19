@@ -23,6 +23,8 @@ import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
 import curso.dio.spring.estoquedecerveja.builder.CervejaDTOBuilder;
 import curso.dio.spring.estoquedecerveja.dto.CervejaDTO;
+import curso.dio.spring.estoquedecerveja.dto.QuantidadeDTO;
+import curso.dio.spring.estoquedecerveja.exception.CervejaEstoqueExcedidoException;
 import curso.dio.spring.estoquedecerveja.exception.CervejaNaoEncontradaException;
 import curso.dio.spring.estoquedecerveja.service.CervejaService;
 import curso.dio.spring.estoquedecerveja.util.JsonConvertionUtils;
@@ -154,6 +156,59 @@ class CervejaControllerTest {
 		mockMvc
 			.perform(MockMvcRequestBuilders.delete("/api/v1/cerveja/" + cervejaDTO.getId())
 				.contentType(MediaType.APPLICATION_JSON))
+					.andExpect(MockMvcResultMatchers.status().isNotFound());
+	}
+	
+	@Test
+	void quandoPatchForInvocadoComIdValidoEQuantidadeValidaRetornarStatusOk() throws Exception {
+		QuantidadeDTO quantidadeDTO = QuantidadeDTO.builder().quantidade(10).build();
+		
+		CervejaDTO cervejaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		cervejaDTO.setQuantidade(cervejaDTO.getQuantidade() + quantidadeDTO.getQuantidade());
+		
+		when(cervejaService.increment(cervejaDTO.getId(), quantidadeDTO.getQuantidade()))
+			.thenReturn(cervejaDTO);
+		
+		mockMvc
+			.perform(MockMvcRequestBuilders.patch("/api/v1/cerveja/" + cervejaDTO.getId() + "/increment")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(JsonConvertionUtils.asJsonString(quantidadeDTO)))
+					.andExpect(MockMvcResultMatchers.status().isOk())
+					.andExpect(MockMvcResultMatchers.jsonPath("$.nome", is(cervejaDTO.getNome())))
+					.andExpect(MockMvcResultMatchers.jsonPath("$.quantidade", is(cervejaDTO.getQuantidade())));
+	}
+	
+	@Test
+	void quandoPatchForInvocadoComIdValidoEQuantidadeMaximaExcedidaRetornarStatusBadRequest() throws Exception {
+		QuantidadeDTO quantidadeDTO = QuantidadeDTO.builder().quantidade(90).build();
+		
+		CervejaDTO cervejaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		cervejaDTO.setQuantidade(cervejaDTO.getQuantidade() + quantidadeDTO.getQuantidade());
+		
+		when(cervejaService.increment(cervejaDTO.getId(), quantidadeDTO.getQuantidade()))
+			.thenThrow(CervejaEstoqueExcedidoException.class);
+		
+		mockMvc
+			.perform(MockMvcRequestBuilders.patch("/api/v1/cerveja/" + cervejaDTO.getId() + "/increment")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(JsonConvertionUtils.asJsonString(quantidadeDTO)))
+					.andExpect(MockMvcResultMatchers.status().isBadRequest());
+	}
+	
+	@Test
+	void quandoPatchForInvocadoComIdNaoValidoRetornarStatusNotFound() throws Exception {
+		QuantidadeDTO quantidadeDTO = QuantidadeDTO.builder().quantidade(90).build();
+		
+		CervejaDTO cervejaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		cervejaDTO.setQuantidade(cervejaDTO.getQuantidade() + quantidadeDTO.getQuantidade());
+		
+		when(cervejaService.increment(cervejaDTO.getId(), quantidadeDTO.getQuantidade()))
+			.thenThrow(CervejaNaoEncontradaException.class);
+		
+		mockMvc
+			.perform(MockMvcRequestBuilders.patch("/api/v1/cerveja/" + cervejaDTO.getId() + "/increment")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(JsonConvertionUtils.asJsonString(quantidadeDTO)))
 					.andExpect(MockMvcResultMatchers.status().isNotFound());
 	}
 	

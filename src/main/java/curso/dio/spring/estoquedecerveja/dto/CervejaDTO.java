@@ -30,7 +30,7 @@ public class CervejaDTO {
 	private String marca;
 	
 	@NotNull
-	@Max(value = 500)
+	@Max(value = 100)
 	private Integer max;
 
 	@NotNull

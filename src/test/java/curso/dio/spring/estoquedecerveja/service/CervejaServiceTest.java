@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import curso.dio.spring.estoquedecerveja.builder.CervejaDTOBuilder;
 import curso.dio.spring.estoquedecerveja.dto.CervejaDTO;
 import curso.dio.spring.estoquedecerveja.entity.Cerveja;
+import curso.dio.spring.estoquedecerveja.exception.CervejaEstoqueExcedidoException;
 import curso.dio.spring.estoquedecerveja.exception.CervejaJaExistenteException;
 import curso.dio.spring.estoquedecerveja.exception.CervejaNaoEncontradaException;
 import curso.dio.spring.estoquedecerveja.mapper.CervejaMapper;
@@ -142,6 +143,51 @@ class CervejaServiceTest {
 		
 		verify(cervejaRepository, times(1))
 			.deleteById(cervejaEsperada.getId());
+	}
+	
+	@Test
+	void quandoIncrementarForChamadoIncrementarCerveja() throws CervejaNaoEncontradaException, CervejaEstoqueExcedidoException {
+		CervejaDTO cervejaEsperadaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		Cerveja cervejaEsperada = CervejaMapper.getInstance().toModel(cervejaEsperadaDTO);
+		
+		when(cervejaRepository.findById(cervejaEsperada.getId()))
+			.thenReturn(Optional.of(cervejaEsperada));
+		
+		when(cervejaRepository.save(cervejaEsperada))
+			.thenReturn(cervejaEsperada);
+		
+		int quantidadeParaIncrementar = 10;
+		int quantidadeEsperadaAposIncremento = cervejaEsperadaDTO.getQuantidade() + quantidadeParaIncrementar;
+		CervejaDTO cervejaIncrementadaDTO = cervejaService.increment(cervejaEsperadaDTO.getId(), quantidadeParaIncrementar);
+		
+		assertThat(quantidadeEsperadaAposIncremento, equalTo(cervejaIncrementadaDTO.getQuantidade()));
+		assertThat(quantidadeEsperadaAposIncremento, lessThan(cervejaEsperadaDTO.getMax()));
+	}
+	
+	@Test
+	void quandoIncrementarForChamadoComQuantidadeMaiorQueOMaximoRetornarErro() throws CervejaNaoEncontradaException, CervejaEstoqueExcedidoException {
+		CervejaDTO cervejaEsperadaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		Cerveja cervejaEsperada = CervejaMapper.getInstance().toModel(cervejaEsperadaDTO);
+		
+		when(cervejaRepository.findById(cervejaEsperada.getId()))
+			.thenReturn(Optional.of(cervejaEsperada));
+		
+		int quantidadeParaIncrementar = 500;
+		
+		assertThrows(CervejaEstoqueExcedidoException.class, () -> cervejaService.increment(cervejaEsperadaDTO.getId(), quantidadeParaIncrementar));
+	}
+	
+	@Test
+	void quandoIncrementarForChamadoComIdNaoValidoRetornarErro() throws CervejaNaoEncontradaException, CervejaEstoqueExcedidoException {
+		CervejaDTO cervejaEsperadaDTO = CervejaDTOBuilder.builder().build().toCervejaDTO();
+		Cerveja cervejaEsperada = CervejaMapper.getInstance().toModel(cervejaEsperadaDTO);
+		
+		when(cervejaRepository.findById(cervejaEsperada.getId()))
+			.thenReturn(Optional.empty());
+		
+		int quantidadeParaIncrementar = 500;
+		
+		assertThrows(CervejaNaoEncontradaException.class, () -> cervejaService.increment(cervejaEsperadaDTO.getId(), quantidadeParaIncrementar));
 	}
 
 }
